@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasbih Digital - Aljihadi.art98</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .header-title { color: #007bff; font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+        
+        .counter { 
+            font-size: 140px; 
+            font-weight: bold; 
+            margin: 20px 0; 
+            font-family: 'Courier New', Courier, monospace;
+            color: #fff;
+        }
+        
+        .btn-main {
+            width: 200px;
+            height: 200px;
+            background-color: #004d99;
+            border-radius: 50%;
+            border: 10px solid #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 50px rgba(0, 123, 255, 0.3);
+            transition: transform 0.05s;
+            /* Menghilangkan outline biru saat diklik di chrome */
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-main:active { transform: scale(0.9); background-color: #007bff; }
+        
+        /* Gaya untuk Emoji 🤲 */
+        .emoji-icon {
+            font-size: 80px;
+            user-select: none;
+        }
+
+        .controls { display: flex; gap: 20px; margin-top: 40px; width: 100%; max-width: 320px; }
+        button.sub-btn { 
+            background: #222; 
+            color: #eee; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            flex: 1; 
+        }
+        button.save-btn { background: #007bff; color: white; }
+
+        .divider { width: 100%; max-width: 300px; height: 1px; background-color: #222; margin: 30px 0; }
+
+        .history-section { width: 100%; max-width: 320px; }
+        .history-title { font-size: 0.8rem; color: #555; margin-bottom: 10px; text-align: center; letter-spacing: 2px; }
+        .history-list { list-style: none; padding: 0; max-height: 180px; overflow-y: auto; }
+        
+        .history-item {
+            background: #0a0a0a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid #007bff;
+        }
+        .item-info { flex-grow: 1; display: flex; justify-content: space-between; margin-right: 15px; }
+        .item-time { font-size: 0.7rem; color: #555; }
+        .item-count { color: #007bff; font-weight: bold; font-size: 1.1rem; }
+        
+        .del-item-btn {
+            background: #1a1a1a;
+            color: #ff4444;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .footer { margin-top: auto; padding: 20px; color: #007bff; font-weight: bold; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div class="header-title">TASBIH DIGITAL</div>
+    
+    <div class="counter" id="display">0</div>
+
+    <button class="btn-main" onclick="tambah()">
+        <span class="emoji-icon">🤲</span>
+    </button>
+
+    <div class="controls">
+        <button class="sub-btn" onclick="reset()">Reset</button>
+        <button class="sub-btn save-btn" onclick="saveHistory()">Simpan</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="history-section">
+        <div class="history-title">RIWAYAT TERAKHIR</div>
+        <ul id="historyList" class="history-list"></ul>
+    </div>
+
+    <div class="footer">Aljihadi.art98</div>
+
+    <script>
+        const displayEl = document.getElementById('display');
+        const historyListEl = document.getElementById('historyList');
+
+        let count = 0;
+        let history = JSON.parse(localStorage.getItem('tasbihHistory')) || [];
+
+        updateHistoryDisplay();
+
+        function tambah() {
+            count++;
+            displayEl.innerText = count;
+            if (navigator.vibrate) navigator.vibrate(40);
+        }
+
+        function reset() {
+            count = 0;
+            displayEl.innerText = "0";
+        }
+
+        function saveHistory() {
+            if (count === 0) return;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleDateString('id-ID', {day:'2-digit', month:'2-digit'}) + ' ' + 
+                            now.getHours().toString().padStart(2, '0') + ':' + 
+                            now.getMinutes().toString().padStart(2, '0');
+            
+            const newItem = { id: Date.now(), count: count, time: timeStr };
+            history.unshift(newItem);
+            localStorage.setItem('tasbihHistory', JSON.stringify(history));
+            
+            updateHistoryDisplay();
+            reset();
+        }
+
+        function deleteItem(id) {
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('tasbihHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            if (history.length === 0) {
+                historyListEl.innerHTML = '<li style="color: #333; text-align:center; font-size: 0.8rem;">Belum ada riwayat</li>';
+                return;
+            }
+
+            historyListEl.innerHTML = history.map(item => `
+                <li class="history-item">
+                    <div class="item-info">
+                        <span class="item-time">${item.time}</span>
+                        <span class="item-count">${item.count}</span>
+                    </div>
+                    <button class="del-item-btn" onclick="deleteItem(${item.id})">✕</button>
+                </li>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
